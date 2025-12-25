@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "../api/constants";
 
 interface Category {
   id?: string;
@@ -18,7 +19,9 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
   const fetchCategories = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/seat-categories?page=0&size=20`, {
+      const res = await fetch(
+        `${API_BASE_URL}/seat-categories?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_CATEGORIES}`,
+        {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -41,8 +44,8 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
     try {
       const method = cat.id ? "PUT" : "POST";
       const url = cat.id
-        ? `http://91.142.94.183:8080/seat-categories/${cat.id}`
-        : `http://91.142.94.183:8080/seat-categories`;
+        ? `${API_BASE_URL}/seat-categories/${cat.id}`
+        : `${API_BASE_URL}/seat-categories`;
 
       await fetch(url, {
         method,
@@ -66,7 +69,7 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
     if (!token || !window.confirm("Удалить эту категорию?")) return;
 
     try {
-      await fetch(`http://91.142.94.183:8080/seat-categories/${id}`, {
+      await fetch(`${API_BASE_URL}/seat-categories/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

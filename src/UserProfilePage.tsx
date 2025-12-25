@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as userApi from "./api/user";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "./api/constants";
 
 interface Props {
   token: string; // Ваш пропуск в мир банкротства
@@ -62,9 +63,9 @@ export default function UserProfilePage({ token }: Props) {
   useEffect(() => {
     async function fetchPurchases() {
       try {
-        const res = await axios.get("http://91.142.94.183:8080/purchases", {
+        const res = await axios.get(`${API_BASE_URL}/purchases`, {
           headers: { Authorization: `Bearer ${token}` },
-          params: { page: 0, size: 20 }, // 20 покупок? Оптимист!
+          params: { page: DEFAULT_PAGE, size: PAGE_SIZES.PURCHASES }, // 20 покупок? Оптимист!
         });
 
         const mapped: PurchaseResponse[] = res.data.data.map((p: any) => ({
@@ -86,7 +87,7 @@ export default function UserProfilePage({ token }: Props) {
         await Promise.all(
           uniqueIds.map(async (id) => {
             try {
-              const filmRes = await axios.get(`http://91.142.94.183:8080/films/${id}`);
+              const filmRes = await axios.get(`${API_BASE_URL}/films/${id}`);
               filmData[id] = filmRes.data.title;
             } catch {
               filmData[id] = "Неизвестный фильм"; // Фильм-призрак
@@ -142,7 +143,7 @@ export default function UserProfilePage({ token }: Props) {
 
     try {
       await axios.post(
-        `http://91.142.94.183:8080/films/${filmId}/reviews`,
+        `${API_BASE_URL}/films/${filmId}/reviews`,
         { rating: review.rating, text: review.text },
         { headers: { Authorization: `Bearer ${token}` } }
       );

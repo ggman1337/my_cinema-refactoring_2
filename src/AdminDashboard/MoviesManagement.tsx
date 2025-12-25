@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "../api/constants";
 
 interface Movie {
   id: string;
@@ -21,7 +22,9 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
   const fetchMovies = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/films?page=0&size=20`, {
+      const res = await fetch(
+        `${API_BASE_URL}/films?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_MOVIES}`,
+        {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -40,7 +43,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
     if (!token) return;
     try {
       if (movie.id) {
-        await fetch(`http://91.142.94.183:8080/films/${movie.id}`, {
+        await fetch(`${API_BASE_URL}/films/${movie.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -54,7 +57,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
           }),
         });
       } else {
-        const res = await fetch(`http://91.142.94.183:8080/films`, {
+        const res = await fetch(`${API_BASE_URL}/films`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -81,7 +84,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить этот фильм?")) return;
     try {
-      await fetch(`http://91.142.94.183:8080/films/${id}`, {
+      await fetch(`${API_BASE_URL}/films/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

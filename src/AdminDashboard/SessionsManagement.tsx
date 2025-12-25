@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "../api/constants";
 
 interface Movie {
   id: string;
@@ -25,6 +26,9 @@ interface SessionsManagementProps {
   token: string;
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DAYS_PER_WEEK = 7;
+
 export default function SessionsManagement({ token }: SessionsManagementProps) {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [halls, setHalls] = useState<Hall[]>([]);
@@ -34,14 +38,16 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
   useEffect(() => {
     if (!token) return;
 
-    fetch("http://91.142.94.183:8080/films?page=0&size=50", {
+    fetch(
+      `${API_BASE_URL}/films?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_FILMS_LOOKUP}`,
+      {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => setMovies(data.data || []))
       .catch(console.error);
 
-    fetch("http://91.142.94.183:8080/halls", {
+    fetch(`${API_BASE_URL}/halls`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -52,7 +58,9 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
 
   const fetchSessions = () => {
     if (!token) return;
-    fetch("http://91.142.94.183:8080/sessions?page=0&size=50", {
+    fetch(
+      `${API_BASE_URL}/sessions?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_SESSIONS}`,
+      {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -70,8 +78,8 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
     try {
       const method = session.id ? "PUT" : "POST";
       const url = session.id
-        ? `http://91.142.94.183:8080/sessions/${session.id}`
-        : "http://91.142.94.183:8080/sessions";
+        ? `${API_BASE_URL}/sessions/${session.id}`
+        : `${API_BASE_URL}/sessions`;
 
       const res = await fetch(url, {
         method,
@@ -100,7 +108,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить этот сеанс?")) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/sessions/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/sessions/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -198,7 +206,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
   useEffect(() => {
     if (!periodEnd && isPeriodic && form.startAt) {
       const date = new Date(form.startAt);
-      date.setDate(date.getDate() + 7);
+      date.setDate(date.getDate() + DAYS_PER_WEEK);
       setPeriodEnd(date.toISOString().slice(0, 16));
     }
   }, [isPeriodic, form.startAt]);
@@ -221,11 +229,11 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
       return;
     }
 
-    const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    const diffDays = (end.getTime() - start.getTime()) / MS_PER_DAY;
     const count =
       period === "EVERY_DAY"
         ? Math.floor(diffDays) + 1
-        : Math.floor(diffDays / 7) + 1;
+        : Math.floor(diffDays / DAYS_PER_WEEK) + 1;
 
     setSessionCount(count);
   }, [form.startAt, periodEnd, period, isPeriodic]);

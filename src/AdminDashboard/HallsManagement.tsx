@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "../api/constants";
 
 interface Seat {
   row: number;
@@ -38,7 +39,7 @@ export default function HallsManagement({ token }: HallsManagementProps) {
   const fetchHalls = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://91.142.94.183:8080/halls", {
+      const res = await fetch(`${API_BASE_URL}/halls`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -57,7 +58,7 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     if (!token) return;
     try {
       const res = await fetch(
-        "http://91.142.94.183:8080/seat-categories?page=0&size=50",
+        `${API_BASE_URL}/seat-categories?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_SEAT_CATEGORIES}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -78,8 +79,8 @@ export default function HallsManagement({ token }: HallsManagementProps) {
     try {
       const method = hall.id ? "PUT" : "POST";
       const url = hall.id
-        ? `http://91.142.94.183:8080/halls/${hall.id}`
-        : "http://91.142.94.183:8080/halls";
+        ? `${API_BASE_URL}/halls/${hall.id}`
+        : `${API_BASE_URL}/halls`;
 
       // 🔹 Генерируем плоский массив мест
       const seats: Seat[] = [];
@@ -122,7 +123,7 @@ export default function HallsManagement({ token }: HallsManagementProps) {
   const handleDelete = async (id: string) => {
     if (!token || !window.confirm("Удалить этот зал?")) return;
     try {
-      const res = await fetch(`http://91.142.94.183:8080/halls/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/halls/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

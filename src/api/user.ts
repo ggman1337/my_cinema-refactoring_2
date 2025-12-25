@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_BASE_URL } from "./constants";
 
 
 export interface User {
@@ -15,7 +16,7 @@ export interface User {
 
 
 export async function getCurrentUser(token: string): Promise<User> {
-  const response = await axios.get("http://91.142.94.183:8080/users/me", {
+  const response = await axios.get(`${API_BASE_URL}/users/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -28,7 +29,7 @@ export async function updateCurrentUser(
   token: string,
   data: Partial<Pick<User, "firstName" | "lastName" | "email" | "age" | "gender">>
 ): Promise<User> {
-  const response = await axios.put("http://91.142.94.183:8080/users/me", data, {
+  const response = await axios.put(`${API_BASE_URL}/users/me`, data, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

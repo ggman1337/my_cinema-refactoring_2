@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as movieApi from "./api/movie";
+import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "./api/constants";
 import ReviewsDisplay from "./ReviewsDisplay";
 
 // Интерфейсы - потому что TypeScript не доверяет нам
@@ -81,8 +82,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     const fetchSessions = async () => {
       try {
         setLoadingSessions(true); // Включаем режим ожидания
-        const response = await axios.get("http://91.142.94.183:8080/sessions", {
-          params: { page: 0, size: 100, filmId: movie.id }, // 100 сеансов? Оптимист!
+        const response = await axios.get(`${API_BASE_URL}/sessions`, {
+          params: { page: DEFAULT_PAGE, size: PAGE_SIZES.MOVIE_SESSIONS, filmId: movie.id }, // 100 сеансов? Оптимист!
         });
         setSessions(response.data.data || []); // Ура, сеансы пришли!
       } catch (err) {
@@ -109,8 +110,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
         setSelectedSeats([]);  // Сбрасываем выбор, чтобы начать мучиться заново
         // Два запроса одновременно - потому что мы можем!
         const [planRes, ticketsRes] = await Promise.all([
-          axios.get(`http://91.142.94.183:8080/halls/${selectedSession.hallId}/plan`),
-          axios.get(`http://91.142.94.183:8080/sessions/${selectedSession.id}/tickets`),
+          axios.get(`${API_BASE_URL}/halls/${selectedSession.hallId}/plan`),
+          axios.get(`${API_BASE_URL}/sessions/${selectedSession.id}/tickets`),
         ]);
 
         setHallPlan(planRes.data); // План зала готов!
@@ -162,7 +163,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
         if (!ticket) continue;
 
         await axios.post(
-          `http://91.142.94.183:8080/tickets/${ticket.id}/reserve`,
+          `${API_BASE_URL}/tickets/${ticket.id}/reserve`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -176,7 +177,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
       // Создаем покупку
       const purchaseRes = await axios.post(
-        "http://91.142.94.183:8080/purchases",
+        `${API_BASE_URL}/purchases`,
         { ticketIds: reservedTickets },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -194,7 +195,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
     try {
       await axios.post(
-        "http://91.142.94.183:8080/payments/process",
+        `${API_BASE_URL}/payments/process`,
         {
           purchaseId: purchase.id,
           cardNumber,
@@ -215,7 +216,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
       // Обновляем билеты
       const ticketsRes = await axios.get(
-        `http://91.142.94.183:8080/sessions/${selectedSession?.id}/tickets`
+        `${API_BASE_URL}/sessions/${selectedSession?.id}/tickets`
       );
       setTickets(ticketsRes.data);
     } catch (err) {
