@@ -4,14 +4,14 @@ import * as userApi from "./api/user";
 import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "./api/constants";
 
 interface Props {
-  token: string; // Ваш пропуск в мир банкротства
+  token: string; 
 }
 
 interface PurchaseResponse {
   id: string;
   clientId: string;
   ticketIds: string[];
-  totalCents: number; // Сумма, от которой ваш кошелек плачет
+  totalCents: number; 
   status: string;
   createdAt: string;
   filmId: string;
@@ -19,8 +19,8 @@ interface PurchaseResponse {
 }
 
 interface ReviewForm {
-  rating: number; // От "ужасно" до "за эти деньги можно было и лучше"
-  text: string; // Ваше мнение, которое никто не прочитает
+  rating: number; 
+  text: string; 
 }
 
 export default function UserProfilePage({ token }: Props) {
@@ -29,16 +29,16 @@ export default function UserProfilePage({ token }: Props) {
     firstName: "",
     lastName: "",
     email: "",
-    gender: "FEMALE", // По умолчанию все женщины - статистика не врет!
-    age: 21, // Вечная молодость разработчика
+    gender: "FEMALE", 
+    age: 21, 
   });
-  const [editing, setEditing] = useState(false); // Режим "ой, я ошибся"
+  const [editing, setEditing] = useState(false); 
 
-  const [purchases, setPurchases] = useState<PurchaseResponse[]>([]); // Доказательства вашей расточительности
+  const [purchases, setPurchases] = useState<PurchaseResponse[]>([]); 
   const [filmTitles, setFilmTitles] = useState<Record<string, string>>({});
-  const [reviewForms, setReviewForms] = useState<Record<string, ReviewForm>>({}); // Незавершенные шедевры критики
+  const [reviewForms, setReviewForms] = useState<Record<string, ReviewForm>>({}); 
 
-  // Загружаем пользователя: "Так вот кто я такой!"
+  
   useEffect(() => {
     async function fetchUser() {
       try {
@@ -53,19 +53,19 @@ export default function UserProfilePage({ token }: Props) {
         });
       } catch (err) {
         console.error("Ошибка загрузки профиля:", err);
-        alert("Ошибка загрузки профиля"); // Классическое "все сломалось"
+        alert("Ошибка загрузки профиля"); 
       }
     }
     fetchUser();
   }, [token]);
 
-  // Загружаем покупки: напоминание о потраченных деньгах
+  
   useEffect(() => {
     async function fetchPurchases() {
       try {
         const res = await axios.get(`${API_BASE_URL}/purchases`, {
           headers: { Authorization: `Bearer ${token}` },
-          params: { page: DEFAULT_PAGE, size: PAGE_SIZES.PURCHASES }, // 20 покупок? Оптимист!
+          params: { page: DEFAULT_PAGE, size: PAGE_SIZES.PURCHASES }, 
         });
 
         const mapped: PurchaseResponse[] = res.data.data.map((p: any) => ({
@@ -76,7 +76,7 @@ export default function UserProfilePage({ token }: Props) {
           status: p.status,
           createdAt: p.createdAt,
           filmId: p.filmId,
-          seats: p.seats || [], // На всякий случай
+          seats: p.seats || [], 
         }));
 
         setPurchases(mapped);
@@ -90,7 +90,7 @@ export default function UserProfilePage({ token }: Props) {
               const filmRes = await axios.get(`${API_BASE_URL}/films/${id}`);
               filmData[id] = filmRes.data.title;
             } catch {
-              filmData[id] = "Неизвестный фильм"; // Фильм-призрак
+              filmData[id] = "Неизвестный фильм"; 
             }
           })
         );
@@ -109,7 +109,7 @@ export default function UserProfilePage({ token }: Props) {
     setForm({ ...form, [name]: name === "age" ? Number(value) : value });
   };
 
-  // Сохраняем профиль: теперь система знает о вас все
+  
   const handleSaveProfile = async () => {
     if (!user) return;
     try {
@@ -122,10 +122,10 @@ export default function UserProfilePage({ token }: Props) {
       });
       setUser(updated);
       setEditing(false);
-      alert("Профиль обновлен!"); // Маленькая победа
+      alert("Профиль обновлен!"); 
     } catch (err) {
       console.error("Ошибка обновления профиля:", err);
-      alert("Ошибка обновления профиля"); // Или не очень
+      alert("Ошибка обновления профиля"); 
     }
   };
 
@@ -136,7 +136,7 @@ export default function UserProfilePage({ token }: Props) {
     }));
   };
 
-  // Отправляем отзыв: ваш голос важен (нет)
+  
   const handleSubmitReview = async (filmId: string) => {
     const review = reviewForms[filmId];
     if (!review || !review.rating || !review.text) return alert("Заполните рейтинг и текст отзыва");
@@ -147,11 +147,11 @@ export default function UserProfilePage({ token }: Props) {
         { rating: review.rating, text: review.text },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Отзыв отправлен!"); // Еще одна маленькая победа
+      alert("Отзыв отправлен!"); 
       setReviewForms((prev) => ({ ...prev, [filmId]: { rating: 0, text: "" } }));
     } catch (err) {
       console.error("Ошибка отправки отзыва:", err);
-      alert("Не удалось отправить отзыв"); // Интернет сказал "нет"
+      alert("Не удалось отправить отзыв"); 
     }
   };
 
@@ -159,7 +159,7 @@ export default function UserProfilePage({ token }: Props) {
 
   return (
     <div className="min-vh-100 bg-dark text-light p-4">
-      {/* Карточка профиля: здесь живут ваши секреты */}
+      
       <div className="card text-dark mb-4">
         <div className="card-body">
           <h2 className="card-title text-primary mb-3">Профиль</h2>
@@ -189,20 +189,20 @@ export default function UserProfilePage({ token }: Props) {
         </div>
       </div>
 
-      {/* История покупок: галерея ваших финансовых решений */}
+      
       <div className="mb-4">
         <h2 className="text-primary mb-3">История покупок</h2>
         {purchases.length === 0 ? (
-          <p>У вас пока нет покупок 🎟️</p> // Грустный смайлик пустого кошелька
+          <p>У вас пока нет покупок 🎟️</p> 
         ) : (
           purchases.map((p: PurchaseResponse) => (
             <div key={p.id} className="card text-dark mb-3">
               <div className="card-body text-light">
                 <strong>{filmTitles[p.filmId as string] || "Загрузка..."}</strong>
                 <br />
-                Итого: {p.totalCents}₽ {/* Напоминание о потраченном */}
+                Итого: {p.totalCents}₽ 
                 <br />
-                Статус: {p.status} {/* Надеемся, что "успешно" */}
+                Статус: {p.status} 
 
                 <div className="mt-2">
                   <h6>Оставить отзыв:</h6>
