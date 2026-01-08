@@ -39,6 +39,7 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
           <li className="mb-2">
             <button
               className={`btn w-100 ${section === "movies" ? "btn-primary" : "btn-outline-light"}`}
+              data-testid="admin-nav-movies"
               onClick={() => setSection("movies")}
             >
               Фильмы
@@ -55,6 +56,7 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
           <li className="mb-2">
             <button
               className={`btn w-100 ${section === "categories" ? "btn-primary" : "btn-outline-light"}`}
+              data-testid="admin-nav-categories"
               onClick={() => setSection("categories")}
             >
               Категории
@@ -63,6 +65,7 @@ export default function AdminDashboard({ onBack }: AdminPanelProps) {
           <li className="mb-2">
             <button
               className={`btn w-100 ${section === "sessions" ? "btn-primary" : "btn-outline-light"}`}
+              data-testid="admin-nav-sessions"
               onClick={() => setSection("sessions")}
             >
               Сеансы

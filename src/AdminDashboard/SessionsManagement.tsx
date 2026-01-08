@@ -154,7 +154,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
       ) : (
         <div className="row">
           {sessions.map((s) => (
-            <div key={s.id} className="col-md-6 mb-3">
+            <div key={s.id} className="col-md-6 mb-3" data-testid={`session-row-${s.id}`}>
               <div className="card shadow-sm p-3 text-light">
                 <strong>{movies.find((m) => m.id === s.filmId)?.title || s.filmId}</strong>{" "}
                 — <em>{halls.find((h) => h.id === s.hallId)?.name || s.hallId}</em>
@@ -174,6 +174,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
                   </button>
                   <button
                     className="btn btn-danger btn-sm"
+                    data-testid={`session-delete-${s.id}`}
                     onClick={() => handleDelete(s.id)}
                   >
                     🗑 Удалить

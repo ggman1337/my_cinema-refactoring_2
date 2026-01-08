@@ -120,7 +120,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
       ) : (
         <div className="row">
           {movies.map((m) => (
-            <div key={m.id} className="col-md-6 col-lg-4 mb-3">
+            <div key={m.id} className="col-md-6 col-lg-4 mb-3" data-testid={`movie-row-${m.id}`}>
               <div className="card shadow-sm">
                 <div className="card-body">
                   <h5 className="card-title">{m.title}</h5>
@@ -137,7 +137,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
                     <button className="btn btn-warning btn-sm" onClick={() => setEditing(m)}>
                       ✏ Редактировать
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(m.id)}>
+                    <button className="btn btn-danger btn-sm" data-testid={`movie-delete-${m.id}`} onClick={() => handleDelete(m.id)}>
                       🗑 Удалить
                     </button>
                   </div>

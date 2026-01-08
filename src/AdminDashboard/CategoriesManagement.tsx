@@ -104,6 +104,7 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
           <li
             key={c.id}
             className="list-group-item d-flex justify-content-between align-items-center"
+            data-testid={`category-row-${c.id}`}
           >
             <span>
               <strong>{c.name}</strong> — {c.priceCents}₽
@@ -117,6 +118,7 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
               </button>
               <button
                 className="btn btn-sm btn-danger"
+                data-testid={`category-delete-${c.id}`}
                 onClick={() => handleDelete(c.id!)}
               >
                 🗑 Удалить
