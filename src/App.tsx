@@ -10,21 +10,23 @@ import AdminDashboard from "./AdminDashboard/AdminDashboard";
 import { getCurrentUser, logout } from "./api/auth";
 import * as movie from "./api/movie";
 import { jwtDecode } from "jwt-decode";
+import { UserRole } from "./types/domain";
+import type { UnixSeconds } from "./types/domain";
 
 let globalAppVersion = "1.0.0";
 
 
 interface TokenPayload {
   sub: string; 
-  role: "ADMIN" | "USER"; 
-  exp: number; 
-  iat: number; 
+  role: UserRole; 
+  exp: UnixSeconds; 
+  iat: UnixSeconds; 
 }
 
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null); 
-  const [role, setRole] = useState<"ADMIN" | "USER" | null>(null); 
+  const [role, setRole] = useState<UserRole | null>(null); 
   const [cachedUserData, setCachedUserData] = useState<any>(null); 
 
   
@@ -76,7 +78,7 @@ export default function App() {
               path="/login"
               element={
                 token
-                  ? role === "ADMIN"
+                  ? role === UserRole.Admin
                     ? <Navigate to="/admin" /> 
                     : <Navigate to="/profile" /> 
                   : <LoginPage onLogin={setAuthData} /> 
@@ -88,7 +90,7 @@ export default function App() {
               path="/register"
               element={
                 token
-                  ? role === "ADMIN"
+                  ? role === UserRole.Admin
                     ? <Navigate to="/admin" /> 
                     : <Navigate to="/profile" /> 
                   : <RegisterPage onRegister={setAuthData} /> 
@@ -99,7 +101,7 @@ export default function App() {
             <Route
               path="/profile"
               element={
-                token && role === "USER"
+                token && role === UserRole.User
                   ? <UserProfilePage token={token} /> 
                   : <Navigate to="/login" /> 
               }
@@ -109,7 +111,7 @@ export default function App() {
             <Route
               path="/admin"
               element={
-                token && role === "ADMIN"
+                token && role === UserRole.Admin
                   ? <AdminDashboard onBack={handleLogout} /> 
                   : <Navigate to="/login" /> 
               }

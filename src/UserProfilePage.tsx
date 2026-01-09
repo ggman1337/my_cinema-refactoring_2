@@ -13,7 +13,7 @@ interface PurchaseResponse {
   ticketIds: string[];
   totalCents: number; 
   status: string;
-  createdAt: string;
+  createdAt: Date;
   filmId: string;
   seats: { row: number; number: number; priceCents: number }[];
 }
@@ -74,7 +74,7 @@ export default function UserProfilePage({ token }: Props) {
           ticketIds: p.ticketIds,
           totalCents: p.totalCents,
           status: p.status,
-          createdAt: p.createdAt,
+          createdAt: new Date(p.createdAt),
           filmId: p.filmId,
           seats: p.seats || [], 
         }));

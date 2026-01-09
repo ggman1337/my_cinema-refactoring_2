@@ -3,7 +3,8 @@ import axios from "axios";
 import * as movieApi from "./api/movie";
 import { API_BASE_URL, DEFAULT_PAGE, PAGE_SIZES } from "./api/constants";
 import ReviewsDisplay from "./ReviewsDisplay";
-
+import { TicketStatus } from "./types/domain";
+import type { CardDetails } from "./types/domain";
 
 interface Props {
   movie: movieApi.Film; 
@@ -14,7 +15,7 @@ interface Session {
   id: string; 
   movieId: string; 
   hallId: string; 
-  startAt: string; 
+  startAt: Date; 
 }
 
 interface Seat {
@@ -44,7 +45,7 @@ interface Ticket {
   id: string; 
   seatId: string; 
   categoryId: string; 
-  status: "AVAILABLE" | "RESERVED" | "SOLD"; 
+  status: TicketStatus; 
   priceCents: number; 
 }
 
@@ -57,9 +58,7 @@ interface Purchase {
 const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [sessions, setSessions] = useState<Session[]>([]); 
   const [loadingSessions, setLoadingSessions] = useState(true); 
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0] 
-  );
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedSession, setSelectedSession] = useState<Session | null>(null); 
 
   const [hallPlan, setHallPlan] = useState<HallPlan | null>(null); 
@@ -70,12 +69,35 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [purchase, setPurchase] = useState<Purchase | null>(null); 
 
   
-  const [cardNumber, setCardNumber] = useState(""); 
-  const [expiryDate, setExpiryDate] = useState(""); 
-  const [cvv, setCvv] = useState(""); 
-  const [cardHolderName, setCardHolderName] = useState(""); 
+  const [card, setCard] = useState<CardDetails>({
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+    cardHolderName: "",
+  }); 
 
   const token = localStorage.getItem("token"); 
+
+  const toDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseDateInputValue = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const updateCardField = (field: keyof CardDetails, value: string) => {
+    setCard((prev) => ({ ...prev, [field]: value }));
+  };
 
 
   useEffect(() => {
@@ -85,7 +107,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
         const response = await axios.get(`${API_BASE_URL}/sessions`, {
           params: { page: DEFAULT_PAGE, size: PAGE_SIZES.MOVIE_SESSIONS, filmId: movie.id }, 
         });
-        setSessions(response.data.data || []); 
+        const data = response.data.data || [];
+        const mapped = data.map((session: { startAt: string } & Omit<Session, "startAt">) => ({
+          ...session,
+          startAt: new Date(session.startAt),
+        }));
+        setSessions(mapped); 
       } catch (err) {
         console.error("Ошибка загрузки сеансов:", err); 
       } finally {
@@ -96,9 +123,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   }, [movie.id]); 
 
   
-  const filteredSessions = sessions.filter(
-    (s) => s.startAt.slice(0, 10) === selectedDate 
-  );
+  const filteredSessions = sessions.filter((s) => isSameDay(s.startAt, selectedDate));
 
   
   useEffect(() => {
@@ -141,7 +166,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
   
   const getSeatStatus = (seatId: string): Ticket["status"] => {
-    return tickets.find((t) => t.seatId === seatId)?.status || "AVAILABLE"; 
+    return tickets.find((t) => t.seatId === seatId)?.status || TicketStatus.Available; 
   };
 
   
@@ -198,10 +223,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
         `${API_BASE_URL}/payments/process`,
         {
           purchaseId: purchase.id,
-          cardNumber,
-          expiryDate,
-          cvv,
-          cardHolderName,
+          ...card,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -209,10 +231,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
       
       setPurchase(null);
       setSelectedSeats([]);
-      setCardNumber("");
-      setExpiryDate("");
-      setCvv("");
-      setCardHolderName("");
+      setCard({
+        cardNumber: "",
+        expiryDate: "",
+        cvv: "",
+        cardHolderName: "",
+      });
 
       
       const ticketsRes = await axios.get(
@@ -267,10 +291,10 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 type="date" 
                 className="form-control d-inline-block" 
                 style={{ width: "200px" }} 
-                value={selectedDate} 
+                value={toDateInputValue(selectedDate)} 
                 onChange={(e) => {
                   
-                  setSelectedDate(e.target.value); 
+                  setSelectedDate(parseDateInputValue(e.target.value)); 
                   setSelectedSession(null); 
                   setHallPlan(null); 
                 }}
@@ -291,7 +315,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
               {!loadingSessions &&
                 filteredSessions.map((session) => {
                   
-                  const time = new Date(session.startAt).toLocaleTimeString(
+                  const time = session.startAt.toLocaleTimeString(
                     [],
                     { hour: "2-digit", minute: "2-digit" } 
                   );
@@ -413,8 +437,8 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
 
                               
                               let color = "btn-outline-light"; 
-                              if (status === "SOLD") color = "btn-danger"; 
-                              else if (status === "RESERVED") color = "btn-warning"; 
+                              if (status === TicketStatus.Sold) color = "btn-danger"; 
+                              else if (status === TicketStatus.Reserved) color = "btn-warning"; 
                               else if (isSelected) color = "btn-success"; 
 
                               return (
@@ -422,7 +446,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                                   key={seat.id} 
                                   className={`btn ${color}`} 
                                   style={{ width: "50px", height: "50px" }} 
-                                  disabled={status !== "AVAILABLE"} 
+                                  disabled={status !== TicketStatus.Available} 
                                   onClick={() => handleSeatClick(seat.id)} 
                                   
                                   title={`${category?.name || "Место"} — ${
@@ -520,29 +544,29 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                         <input
                           placeholder="Номер карты"
                           className="form-control"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
+                          value={card.cardNumber}
+                          onChange={(e) => updateCardField("cardNumber", e.target.value)}
                         />
                         
                         <input
                           placeholder="Срок (MM/YY)"
                           className="form-control"
-                          value={expiryDate}
-                          onChange={(e) => setExpiryDate(e.target.value)}
+                          value={card.expiryDate}
+                          onChange={(e) => updateCardField("expiryDate", e.target.value)}
                         />
                         
                         <input
                           placeholder="CVV"
                           className="form-control"
-                          value={cvv}
-                          onChange={(e) => setCvv(e.target.value)}
+                          value={card.cvv}
+                          onChange={(e) => updateCardField("cvv", e.target.value)}
                         />
                         
                         <input
                           placeholder="Имя владельца карты"
                           className="form-control"
-                          value={cardHolderName}
-                          onChange={(e) => setCardHolderName(e.target.value)}
+                          value={card.cardHolderName}
+                          onChange={(e) => updateCardField("cardHolderName", e.target.value)}
                         />
                         
                         <button
