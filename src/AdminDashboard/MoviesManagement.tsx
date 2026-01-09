@@ -100,6 +100,7 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
 
       <button
         className="btn btn-success mb-3"
+        data-testid="movie-create"
         onClick={() =>
           setEditing({
             id: "",
@@ -134,7 +135,11 @@ export default function MoviesManagement({ token }: MoviesManagementProps) {
                     Возрастной рейтинг: <strong>{m.ageRating}</strong>
                   </p>
                   <div className="d-flex justify-content-between">
-                    <button className="btn btn-warning btn-sm" onClick={() => setEditing(m)}>
+                    <button
+                      className="btn btn-warning btn-sm"
+                      data-testid={`movie-edit-${m.id}`}
+                      onClick={() => setEditing(m)}
+                    >
                       ✏ Редактировать
                     </button>
                     <button className="btn btn-danger btn-sm" data-testid={`movie-delete-${m.id}`} onClick={() => handleDelete(m.id)}>
@@ -168,12 +173,12 @@ function MovieForm({ movie, onSave, onCancel }: MovieFormProps) {
   return (
     <div className="card p-3 mb-4 shadow-sm">
       <h5 className="mb-3 text-primary">{movie.id ? "Редактирование фильма" : "Добавление фильма"}</h5>
-      <input className="form-control mb-2" name="title" value={form.title} onChange={handleChange} placeholder="Название" />
-      <textarea className="form-control mb-2" name="description" value={form.description} onChange={handleChange} placeholder="Описание" />
-      <input className="form-control mb-2" name="durationMinutes" type="number" value={form.durationMinutes} onChange={handleChange} placeholder="Продолжительность (мин.)" />
-      <input className="form-control mb-3" name="ageRating" value={form.ageRating} onChange={handleChange} placeholder="Возрастной рейтинг (например, 12+)" />
+      <input className="form-control mb-2" data-testid="movie-title-input" name="title" value={form.title} onChange={handleChange} placeholder="Название" />
+      <textarea className="form-control mb-2" data-testid="movie-description-input" name="description" value={form.description} onChange={handleChange} placeholder="Описание" />
+      <input className="form-control mb-2" data-testid="movie-duration-input" name="durationMinutes" type="number" value={form.durationMinutes} onChange={handleChange} placeholder="Продолжительность (мин.)" />
+      <input className="form-control mb-3" data-testid="movie-ageRating-input" name="ageRating" value={form.ageRating} onChange={handleChange} placeholder="Возрастной рейтинг (например, 12+)" />
       <div className="d-flex justify-content-end">
-        <button className="btn btn-success me-2" onClick={() => onSave(form)}>💾 Сохранить</button>
+        <button className="btn btn-success me-2" data-testid="movie-save" onClick={() => onSave(form)}>💾 Сохранить</button>
         <button className="btn btn-secondary" onClick={onCancel}>✖ Отмена</button>
       </div>
     </div>

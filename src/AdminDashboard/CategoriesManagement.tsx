@@ -86,6 +86,7 @@ export default function CategoriesManagement({ token }: CategoriesManagementProp
 
       <button
         className="btn btn-primary mb-3"
+        data-testid="category-create"
         onClick={() => setEditing({ name: "", priceCents: 0 })}
       >
         ➕ Добавить категорию
@@ -155,6 +156,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
 
       <input
         className="form-control mb-2"
+        data-testid="category-name-input"
         name="name"
         placeholder="Название категории"
         value={form.name}
@@ -163,6 +165,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
 
       <input
         className="form-control mb-3"
+        data-testid="category-price-input"
         name="priceCents"
         type="number"
         placeholder="Цена (₽)"
@@ -171,7 +174,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
       />
 
       <div className="d-flex justify-content-end">
-        <button className="btn btn-success me-2" onClick={() => onSave(form)}>
+        <button className="btn btn-success me-2" data-testid="category-save" onClick={() => onSave(form)}>
           💾 Сохранить
         </button>
         <button className="btn btn-secondary" onClick={onCancel}>

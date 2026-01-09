@@ -235,3 +235,271 @@ test("должен удалять сеанс после подтверждени
   await deleteRequest;
   await expect(page.getByTestId("session-row-s1")).toHaveCount(0);
 });
+
+test("должен создавать новый фильм", async ({ page }) => {
+  await prepareAdmin(page);
+
+  let moviesFetchCount = 0;
+  await page.route(
+    `**/films?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_MOVIES}`,
+    async (route) => {
+      moviesFetchCount += 1;
+      const body =
+        moviesFetchCount === 1
+          ? moviesResponse
+          : {
+              data: [
+                ...moviesResponse.data,
+                {
+                  id: "m3",
+                  title: "Film Three",
+                  description: "Desc 3",
+                  durationMinutes: 100,
+                  ageRating: "18+",
+                },
+              ],
+            };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    }
+  );
+
+  await page.route("**/films", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ id: "m3" }),
+      });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/admin");
+
+  await page.getByTestId("movie-create").click();
+
+  await page.getByTestId("movie-title-input").fill("Film Three");
+  await page.getByTestId("movie-description-input").fill("Desc 3");
+  await page.getByTestId("movie-duration-input").fill("100");
+  await page.getByTestId("movie-ageRating-input").fill("18+");
+
+  const saveRequest = page.waitForRequest(
+    (request) => request.method() === "POST" && request.url().includes("/films")
+  );
+
+  await page.getByTestId("movie-save").click();
+
+  await saveRequest;
+  await expect(page.getByTestId("movie-row-m3")).toBeVisible();
+});
+
+test("должен редактировать фильм", async ({ page }) => {
+  await prepareAdmin(page);
+
+  let moviesFetchCount = 0;
+  await page.route(
+    `**/films?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_MOVIES}`,
+    async (route) => {
+      moviesFetchCount += 1;
+      const body =
+        moviesFetchCount === 1
+          ? moviesResponse
+          : {
+              data: [
+                {
+                  ...moviesResponse.data[0],
+                  title: "Film One Updated",
+                },
+                moviesResponse.data[1],
+              ],
+            };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    }
+  );
+
+  await page.route("**/films/m1", async (route) => {
+    if (route.request().method() === "PUT") {
+      await route.fulfill({ status: 200, body: "{}" });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/admin");
+
+  await page.getByTestId("movie-edit-m1").click();
+
+  await page.getByTestId("movie-title-input").fill("Film One Updated");
+
+  const updateRequest = page.waitForRequest(
+    (request) => request.method() === "PUT" && request.url().includes("/films/m1")
+  );
+
+  await page.getByTestId("movie-save").click();
+
+  await updateRequest;
+  await expect(page.getByTestId("movie-row-m1")).toContainText("Film One Updated");
+});
+
+test("должен валидировать категорию без названия", async ({ page }) => {
+  await prepareAdmin(page);
+  await page.goto("/admin");
+
+  await page.getByTestId("admin-nav-categories").click();
+
+  await page.getByTestId("category-create").click();
+
+  const dialogPromise = page.waitForEvent("dialog");
+  await page.getByTestId("category-save").click();
+
+  const dialog = await dialogPromise;
+  expect(dialog.type()).toBe("alert");
+});
+
+test("должен создавать категорию мест", async ({ page }) => {
+  await prepareAdmin(page);
+
+  let categoriesFetchCount = 0;
+  await page.route(
+    `**/seat-categories?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_CATEGORIES}`,
+    async (route) => {
+      categoriesFetchCount += 1;
+      const body =
+        categoriesFetchCount === 1
+          ? categoriesResponse
+          : {
+              data: [
+                ...categoriesResponse.data,
+                { id: "c3", name: "Comfort", priceCents: 400 },
+              ],
+            };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    }
+  );
+
+  await page.route("**/seat-categories", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({ status: 200, body: "{}" });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/admin");
+  await page.getByTestId("admin-nav-categories").click();
+
+  await page.getByTestId("category-create").click();
+
+  await page.getByTestId("category-name-input").fill("Comfort");
+  await page.getByTestId("category-price-input").fill("4");
+
+  const saveRequest = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" && request.url().includes("/seat-categories")
+  );
+
+  await page.getByTestId("category-save").click();
+  await saveRequest;
+
+  await expect(page.getByTestId("category-row-c3")).toBeVisible();
+});
+
+test("должен создавать сеанс с повторением", async ({ page }) => {
+  await prepareAdmin(page);
+
+  let sessionsFetchCount = 0;
+  await page.route(
+    `**/sessions?page=${DEFAULT_PAGE}&size=${PAGE_SIZES.ADMIN_SESSIONS}`,
+    async (route) => {
+      sessionsFetchCount += 1;
+      const body =
+        sessionsFetchCount === 1
+          ? sessionsResponse
+          : {
+              data: [
+                ...sessionsResponse.data,
+                {
+                  id: "s2",
+                  filmId: "m2",
+                  hallId: "h2",
+                  startAt: "2026-01-10T10:00:00.000Z",
+                },
+              ],
+            };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    }
+  );
+
+  await page.route("**/sessions", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({ status: 200, body: "{}" });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/admin");
+  await page.getByTestId("admin-nav-sessions").click();
+
+  await page.getByTestId("session-create").click();
+
+  await page.getByTestId("session-film-select").selectOption("m2");
+  await page.getByTestId("session-hall-select").selectOption("h2");
+  await page.getByTestId("session-start-input").fill("2026-01-10T10:00");
+  await page.getByTestId("session-periodic-check").check();
+  await page.getByTestId("session-period-end-input").fill("2026-01-17T10:00");
+
+  await expect(page.locator(".alert.alert-info")).toBeVisible();
+
+  const saveRequest = page.waitForRequest(
+    (request) => request.method() === "POST" && request.url().includes("/sessions")
+  );
+
+  await page.getByTestId("session-save").click();
+  await saveRequest;
+
+  await expect(page.getByTestId("session-row-s2")).toBeVisible();
+});
+
+test("должен редактировать сеанс", async ({ page }) => {
+  await prepareAdmin(page);
+
+  await page.route("**/sessions/s1", async (route) => {
+    if (route.request().method() === "PUT") {
+      await route.fulfill({ status: 200, body: "{}" });
+      return;
+    }
+    await route.fallback();
+  });
+
+  await page.goto("/admin");
+  await page.getByTestId("admin-nav-sessions").click();
+
+  await page.getByTestId("session-edit-s1").click();
+
+  await page.getByTestId("session-start-input").fill("2026-01-02T11:00");
+
+  const updateRequest = page.waitForRequest(
+    (request) => request.method() === "PUT" && request.url().includes("/sessions/s1")
+  );
+
+  await page.getByTestId("session-save").click();
+  await updateRequest;
+});

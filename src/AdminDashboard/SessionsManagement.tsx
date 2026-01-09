@@ -125,7 +125,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
       <h2 className="text-primary mb-4">🎬 Управление сеансами</h2>
 
       <button
-        className="btn btn-success mb-3"
+        className="btn btn-success mb-3" data-testid="session-create"
         onClick={() =>
           setEditing({
             id: "",
@@ -166,9 +166,7 @@ export default function SessionsManagement({ token }: SessionsManagementProps) {
                   </div>
                 )}
                 <div className="mt-2 d-flex justify-content-between">
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={() => setEditing(s)}
+                  <button className="btn btn-warning btn-sm" data-testid={`session-edit-${s.id}`} onClick={() => setEditing(s)}
                   >
                     ✏ Редактировать
                   </button>
@@ -243,13 +241,13 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
     <div className="card p-3 mb-4 shadow-sm">
       <h5 className="mb-3 text-primary">{session.id ? "Редактирование сеанса" : "Новый сеанс"}</h5>
 
-      <select name="filmId" value={form.filmId} onChange={handleChange} className="form-control mb-2">
+      <select data-testid="session-film-select" name="filmId" value={form.filmId} onChange={handleChange} className="form-control mb-2">
         {movies.map((m) => (
           <option key={m.id} value={m.id}>{m.title}</option>
         ))}
       </select>
 
-      <select name="hallId" value={form.hallId} onChange={handleChange} className="form-control mb-2">
+      <select data-testid="session-hall-select" name="hallId" value={form.hallId} onChange={handleChange} className="form-control mb-2">
         {halls.map((h) => (
           <option key={h.id} value={h.id}>{h.name}</option>
         ))}
@@ -259,6 +257,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
       <input
         className="form-control mb-3"
         type="datetime-local"
+        data-testid="session-start-input"
         name="startAt"
         value={form.startAt}
         onChange={handleChange}
@@ -269,6 +268,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
           type="checkbox"
           className="form-check-input"
           id="periodicCheck"
+          data-testid="session-periodic-check"
           checked={isPeriodic}
           onChange={() => setIsPeriodic(!isPeriodic)}
         />
@@ -280,6 +280,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
       {isPeriodic && (
         <>
           <select
+            data-testid="session-period-select"
             value={period}
             onChange={(e) => setPeriod(e.target.value as "EVERY_DAY" | "EVERY_WEEK")}
             className="form-control mb-2"
@@ -292,6 +293,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
           <input
             className="form-control mb-2"
             type="datetime-local"
+            data-testid="session-period-end-input"
             value={periodEnd}
             onChange={(e) => setPeriodEnd(e.target.value)}
           />
@@ -309,6 +311,7 @@ function SessionForm({ session, movies, halls, onSave, onCancel }: SessionFormPr
       <div className="d-flex justify-content-end mt-3">
         <button
           className="btn btn-success me-2"
+          data-testid="session-save"
           onClick={() =>
             onSave({
               ...form,
