@@ -26,27 +26,27 @@ interface Seat {
   status: string; 
 }
 
-interface Category {
+interface SeatCategory {
   id: string; 
   name: string; 
-  priceCents: number; 
+  priceRub: number; 
 }
 
 interface HallPlan {
   hallId: string; 
   rows: number;  
   seats: Seat[]; 
-  categories: Category[];  
+  categories: SeatCategory[];  
 }
 
 
 
-interface Ticket {
+interface SessionSeatTicket {
   id: string; 
   seatId: string; 
   categoryId: string; 
   status: TicketStatus; 
-  priceCents: number; 
+  priceRub: number; 
 }
 
 interface Purchase {
@@ -64,7 +64,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   const [hallPlan, setHallPlan] = useState<HallPlan | null>(null); 
   const [loadingPlan, setLoadingPlan] = useState(false); 
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]); 
-  const [tickets, setTickets] = useState<Ticket[]>([]); 
+  const [sessionSeatTickets, setSessionSeatTickets] = useState<SessionSeatTicket[]>([]); 
 
   const [purchase, setPurchase] = useState<Purchase | null>(null); 
 
@@ -139,8 +139,23 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
           axios.get(`${API_BASE_URL}/sessions/${selectedSession.id}/tickets`),
         ]);
 
-        setHallPlan(planRes.data); 
-        setTickets(ticketsRes.data); 
+        setHallPlan({
+          ...planRes.data,
+          categories: planRes.data.categories.map(
+            (category: { priceCents: number } & Omit<SeatCategory, "priceRub">) => ({
+              ...category,
+              priceRub: category.priceCents,
+            })
+          ),
+        });
+        setSessionSeatTickets(
+          ticketsRes.data.map(
+            (ticket: { priceCents: number } & Omit<SessionSeatTicket, "priceRub">) => ({
+              ...ticket,
+              priceRub: ticket.priceCents,
+            })
+          )
+        );
       } catch (err) {
         console.error("Ошибка загрузки плана или билетов:", err); 
       } finally {
@@ -161,20 +176,23 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
   };
 
   
-  const getCategory = (catId: string) =>
+  const getSeatCategory = (catId: string) =>
     hallPlan?.categories.find((c) => c.id === catId); 
 
   
-  const getSeatStatus = (seatId: string): Ticket["status"] => {
-    return tickets.find((t) => t.seatId === seatId)?.status || TicketStatus.Available; 
+  const getSeatStatus = (seatId: string): SessionSeatTicket["status"] => {
+    return (
+      sessionSeatTickets.find((t) => t.seatId === seatId)?.status ||
+      TicketStatus.Available
+    ); 
   };
 
   
   const totalPrice = selectedSeats.reduce((sum, id) => {
     const seat = hallPlan?.seats.find((s) => s.id === id);
     if (!seat) return sum;
-    const cat = getCategory(seat.categoryId);
-    return sum + (cat ? cat.priceCents : 0);
+    const cat = getSeatCategory(seat.categoryId);
+    return sum + (cat ? cat.priceRub : 0);
   }, 0);
 
   
@@ -184,11 +202,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     try {
       
       for (const seatId of selectedSeats) {
-        const ticket = tickets.find((t) => t.seatId === seatId);
-        if (!ticket) continue;
+        const sessionSeatTicket = sessionSeatTickets.find((t) => t.seatId === seatId);
+        if (!sessionSeatTicket) continue;
 
         await axios.post(
-          `${API_BASE_URL}/tickets/${ticket.id}/reserve`,
+          `${API_BASE_URL}/tickets/${sessionSeatTicket.id}/reserve`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -196,7 +214,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
       alert("Места успешно забронированы!"); 
 
       
-      const reservedTickets = tickets
+      const reservedTickets = sessionSeatTickets
         .filter((t) => selectedSeats.includes(t.seatId))
         .map((t) => t.id);
 
@@ -242,7 +260,14 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
       const ticketsRes = await axios.get(
         `${API_BASE_URL}/sessions/${selectedSession?.id}/tickets`
       );
-      setTickets(ticketsRes.data);
+      setSessionSeatTickets(
+        ticketsRes.data.map(
+          (ticket: { priceCents: number } & Omit<SessionSeatTicket, "priceRub">) => ({
+            ...ticket,
+            priceRub: ticket.priceCents,
+          })
+        )
+      );
     } catch (err) {
       console.error("Ошибка оплаты:", err);
       alert("Ошибка оплаты. Проверьте данные карты."); 
@@ -375,7 +400,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                           ></span>
                           
                           <small className="text-light">
-                            {c.name} — {c.priceCents } ₽
+                            {c.name} — {c.priceRub } ₽
                           </small>
                         </div>
                       ))}
@@ -431,7 +456,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                               
                               const status = getSeatStatus(seat.id);
                               
-                              const category = getCategory(seat.categoryId);
+                              const category = getSeatCategory(seat.categoryId);
                               
                               const isSelected = selectedSeats.includes(seat.id);
 
@@ -450,7 +475,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                                   onClick={() => handleSeatClick(seat.id)} 
                                   
                                   title={`${category?.name || "Место"} — ${
-                                    category ? category.priceCents : 0
+                                    category ? category.priceRub : 0
                                   } ₽`}
                                 >
                                   {seat.number} 
@@ -472,9 +497,11 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                   {selectedSeats
                     .map((id) => {
                       
-                      const ticket = tickets.find((t) => t.seatId === id);
+                      const sessionSeatTicket = sessionSeatTickets.find(
+                        (t) => t.seatId === id
+                      );
                       
-                      if (!ticket || !hallPlan) return ""; 
+                      if (!sessionSeatTicket || !hallPlan) return ""; 
 
                       
                       const seat = hallPlan.seats.find((s) => s.id === id);
@@ -482,10 +509,10 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                       if (!seat) return "";
 
                       
-                      const cat = getCategory(ticket.categoryId);
+                      const cat = getSeatCategory(sessionSeatTicket.categoryId);
                       
                       return `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${
-                        cat ? cat.priceCents : 0
+                        cat ? cat.priceRub : 0
                       } ₽)`;
                     })
                     .filter(Boolean) 
@@ -510,16 +537,16 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                       
                       <p>
                         <strong>Места:</strong>{" "}
-                        {tickets
+                        {sessionSeatTickets
                           .filter((t) => purchase.ticketIds.includes(t.id)) 
                           .map((t) => {
                             
-                            const cat = getCategory(t.categoryId);
+                            const cat = getSeatCategory(t.categoryId);
                             const seat = hallPlan.seats.find((s) => s.id === t.seatId);
                             
                             return seat
                               ? `Ряд ${seat.row + 1}, №${seat.number} (${cat?.name} — ${
-                                  cat?.priceCents
+                                  cat?.priceRub
                                 } ₽)`
                               : ""; 
                           })
@@ -528,12 +555,12 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                       
                                         <p>
                       <strong>Сумма:</strong>{" "}
-                      {tickets
+                      {sessionSeatTickets
                         .filter((t) => purchase.ticketIds.includes(t.id)) 
                         .reduce((sum, t) => {
                           
-                          const cat = getCategory(t.categoryId);
-                          return sum + (cat ? cat.priceCents : 0); 
+                          const cat = getSeatCategory(t.categoryId);
+                          return sum + (cat ? cat.priceRub : 0); 
                         }, 0)}{" "}
                       ₽
                     </p>
