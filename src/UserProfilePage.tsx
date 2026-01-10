@@ -157,35 +157,41 @@ export default function UserProfilePage({ token }: Props) {
 
   if (!user) return <div className="text-center text-light mt-5">Загрузка профиля...</div>;
 
+  const renderProfileForm = () => (
+    <>
+      <input className="form-control mb-2" name="firstName" value={form.firstName} onChange={handleChange} placeholder="Имя" />
+      <input className="form-control mb-2" name="lastName" value={form.lastName} onChange={handleChange} placeholder="Фамилия" />
+      <input className="form-control mb-2" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
+      <select className="form-control mb-2" name="gender" value={form.gender} onChange={handleChange}>
+        <option>Женский</option>
+        <option>Мужской</option>
+      </select>
+      <input className="form-control mb-2" name="age" type="number" value={form.age} onChange={handleChange} placeholder="Возраст" />
+      <button className="btn btn-success me-2" onClick={handleSaveProfile}>Сохранить</button>
+      <button className="btn btn-secondary" onClick={() => setEditing(false)}>Отмена</button>
+    </>
+  );
+
+  const renderProfileView = () => (
+    <>
+      <p className="text-light">Имя: {form.firstName}</p>
+      <p className="text-light">Фамилия: {form.lastName}</p>
+      <p className="text-light">Email: {form.email}</p>
+      <p className="text-light">Пол: {form.gender}</p>
+      <p className="text-light">Возраст: {form.age}</p>
+      <button className="btn btn-primary" onClick={() => setEditing(true)}>Редактировать</button>
+    </>
+  );
+
+  const profileSection = editing ? renderProfileForm() : renderProfileView();
+
   return (
     <div className="min-vh-100 bg-dark text-light p-4">
       
       <div className="card text-dark mb-4">
         <div className="card-body">
           <h2 className="card-title text-primary mb-3">Профиль</h2>
-          {editing ? (
-            <>
-              <input className="form-control mb-2" name="firstName" value={form.firstName} onChange={handleChange} placeholder="Имя" />
-              <input className="form-control mb-2" name="lastName" value={form.lastName} onChange={handleChange} placeholder="Фамилия" />
-              <input className="form-control mb-2" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
-              <select className="form-control mb-2" name="gender" value={form.gender} onChange={handleChange}>
-                <option>Женский</option>
-                <option>Мужской</option>
-              </select>
-              <input className="form-control mb-2" name="age" type="number" value={form.age} onChange={handleChange} placeholder="Возраст" />
-              <button className="btn btn-success me-2" onClick={handleSaveProfile}>Сохранить</button>
-              <button className="btn btn-secondary" onClick={() => setEditing(false)}>Отмена</button>
-            </>
-          ) : (
-            <>
-              <p className="text-light">Имя: {form.firstName}</p>
-              <p className="text-light">Фамилия: {form.lastName}</p>
-              <p className="text-light">Email: {form.email}</p>
-              <p className="text-light">Пол: {form.gender}</p>
-              <p className="text-light">Возраст: {form.age}</p>
-              <button className="btn btn-primary" onClick={() => setEditing(true)}>Редактировать</button>
-            </>
-          )}
+          {profileSection}
         </div>
       </div>
 

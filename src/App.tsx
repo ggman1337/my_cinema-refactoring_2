@@ -65,6 +65,13 @@ export default function App() {
     }
   };
 
+  const getAuthRedirect = () => {
+    if (!token) return null;
+    return role === UserRole.Admin ? "/admin" : "/profile";
+  };
+
+  const authRedirect = getAuthRedirect();
+
   return (
     <Router>
       <div className="app-container min-vh-100 d-flex flex-column bg-dark text-light">
@@ -77,11 +84,9 @@ export default function App() {
             <Route
               path="/login"
               element={
-                token
-                  ? role === UserRole.Admin
-                    ? <Navigate to="/admin" /> 
-                    : <Navigate to="/profile" /> 
-                  : <LoginPage onLogin={setAuthData} /> 
+                authRedirect
+                  ? <Navigate to={authRedirect} />
+                  : <LoginPage onLogin={setAuthData} />
               }
             />
             
@@ -89,11 +94,9 @@ export default function App() {
             <Route
               path="/register"
               element={
-                token
-                  ? role === UserRole.Admin
-                    ? <Navigate to="/admin" /> 
-                    : <Navigate to="/profile" /> 
-                  : <RegisterPage onRegister={setAuthData} /> 
+                authRedirect
+                  ? <Navigate to={authRedirect} />
+                  : <RegisterPage onRegister={setAuthData} />
               }
             />
 

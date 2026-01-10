@@ -99,6 +99,16 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     setCard((prev) => ({ ...prev, [field]: value }));
   };
 
+  const seatStatusClasses: Record<TicketStatus, string> = {
+    [TicketStatus.Available]: "btn-outline-light",
+    [TicketStatus.Reserved]: "btn-warning",
+    [TicketStatus.Sold]: "btn-danger",
+  };
+
+  const getSeatButtonClass = (status: TicketStatus, isSelected: boolean) => {
+    if (status !== TicketStatus.Available) return seatStatusClasses[status];
+    return isSelected ? "btn-success" : seatStatusClasses[TicketStatus.Available];
+  };
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -194,6 +204,31 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
     const cat = getSeatCategory(seat.categoryId);
     return sum + (cat ? cat.priceRub : 0);
   }, 0);
+
+  const renderSessions = () => {
+    if (loadingSessions) return <p>Загрузка сеансов...</p>;
+    if (filteredSessions.length === 0) return <p>Сеансов нет</p>;
+
+    return filteredSessions.map((session) => {
+      const time = session.startAt.toLocaleTimeString(
+        [],
+        { hour: "2-digit", minute: "2-digit" }
+      );
+      return (
+        <button
+          key={session.id}
+          className={`btn btn-primary btn-lg ${
+            selectedSession?.id === session.id ? "active" : ""
+          }`}
+          onClick={() => setSelectedSession(session)}
+        >
+          {time} — Зал
+        </button>
+      );
+    });
+  };
+
+  const showSelectionSummary = selectedSeats.length > 0 && !!hallPlan && !purchase;
 
   
   const handleReserve = async () => {
@@ -330,32 +365,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
             <h5 className="mt-4 text-light">Доступные сеансы:</h5>
             
             <div className="d-flex flex-wrap gap-2 mt-2">
-              
-              {loadingSessions && <p>Загрузка сеансов...</p>}
-              
-              {!loadingSessions && filteredSessions.length === 0 && (
-                <p>Сеансов нет</p>
-              )}
-              
-              {!loadingSessions &&
-                filteredSessions.map((session) => {
-                  
-                  const time = session.startAt.toLocaleTimeString(
-                    [],
-                    { hour: "2-digit", minute: "2-digit" } 
-                  );
-                  return (
-                    <button
-                      key={session.id} 
-                      className={`btn btn-primary btn-lg ${
-                        selectedSession?.id === session.id ? "active" : ""
-                      }`}
-                      onClick={() => setSelectedSession(session)} 
-                    >
-                      {time} — Зал 
-                    </button>
-                  );
-                })}
+              {renderSessions()}
             </div>
 
             
@@ -461,10 +471,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                               const isSelected = selectedSeats.includes(seat.id);
 
                               
-                              let color = "btn-outline-light"; 
-                              if (status === TicketStatus.Sold) color = "btn-danger"; 
-                              else if (status === TicketStatus.Reserved) color = "btn-warning"; 
-                              else if (isSelected) color = "btn-success"; 
+                              const color = getSeatButtonClass(status, isSelected);
 
                               return (
                                 <button
@@ -489,7 +496,7 @@ const MovieDetailsPage: React.FC<Props> = ({ movie, onBack }) => {
                 )}
 
                 
-                {selectedSeats.length > 0 && hallPlan && !purchase && (
+                {showSelectionSummary && (
               <div className="text-center mb-3">
                   
                   <p>
